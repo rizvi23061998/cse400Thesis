@@ -1,7 +1,9 @@
+library(ROCR)
 library(e1071)
 library(randomForest)
 library(DMwR)
 library(dplyr)
+library(caret)
 library(caTools)
 
 fpsf = readRDS("out/featurized_PSF.rds");
@@ -35,3 +37,13 @@ dresstrain <- SMOTE( protection~., dresstrain, perc.over = 280, k = 5, perc.unde
 print(as.data.frame(table(dresstrain$protection)));
 
 model.forest = randomForest(protection ~., data=dresstrain )
+predicted <- predict(model.forest, dresstest,type = 'prob')
+confusionMatrix(data=predicted.response, reference=dresstest$protection)
+
+
+ROCRpred1 <- prediction(predicted[,1], dresstest$protection)
+ROCRperf1 <- performance(ROCRpred1, 'tpr','fpr')
+ROCRpred2 <- prediction(predicted[,2], dresstest$protection)
+ROCRperf2 <- performance(ROCRpred2, 'tpr','fpr')
+plot(ROCRperf1, colorize = TRUE, text.adj = c(-0.2,1.7))
+plot(ROCRperf1, colorize = TRUE, text.adj = c(-0.2,1.7),add=TRUE)
