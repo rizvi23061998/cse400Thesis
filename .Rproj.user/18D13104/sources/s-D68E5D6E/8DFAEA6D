@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1564812516149.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1943048999",
+    "id" : "8DFAEA6D",
+    "lastKnownWriteTime" : 1564850558,
+    "last_content_update" : 1564850558901,
+    "path" : "F:/Ebooks&Lectures/Level-4_Term-1/cse_400/Antigenic-master/Code/R/Magnan/featurization/combineRaw.R",
+    "project_path" : "featurization/combineRaw.R",
+    "properties" : {
+        "cursorPosition" : "36,46",
+        "scrollLine" : "19",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
