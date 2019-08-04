@@ -5,7 +5,9 @@ library(DMwR)
 library(dplyr)
 library(caret)
 library(caTools)
+library(PRROC)
 
+classifier = "rf"
 fpsf = readRDS("out/featurized_PSF.rds");
 ngpsf = readRDS("out/featurized_nGrams.rds");
 fngdip = readRDS("out/featurized_nGDip.rds");
@@ -25,6 +27,7 @@ comb_data <- subset(comb_data, select = c(features_important))
 saveRDS(comb_data,"out/comb_raw.rds");
 comb_data$Name = NULL;
 print("Applying smote");
+set.seed(112);
 # comb_data <- SMOTE( protection~., comb_data, perc.over = 280, k = 5, perc.under = 150)
 
 
@@ -35,15 +38,35 @@ dresstest <- subset(comb_data, split == FALSE)
 
 dresstrain <- SMOTE( protection~., dresstrain, perc.over = 280, k = 5, perc.under = 150);
 print(as.data.frame(table(dresstrain$protection)));
+if(classifier == "rf"){
+  if(!file.exists("out/rf_model_comb.rds")){
+    model.forest = randomForest(protection ~., data=dresstrain )
+    saveRDS(model.forest,"out/rf_model_comb.rds");
+  }else{
+    model.forest = readRDS("out/rf_model_comb.rds");
+  }
+  predicted <- predict(model.forest, dresstest)
+  print(as.numeric(predicted)>=.5)
+  print(confusionMatrix(data=predicted, reference=dresstest$protection))
+  predicted <- predict(model.forest, dresstest,type = 'prob')
+  print(as.numeric(predicted))
+  
+  ROCRpred2 <- prediction(predicted[,2], dresstest$protection)
+  ROCRperf2 <- performance(ROCRpred2, 'tpr','fpr')
+  plot(ROCRperf2, colorize = TRUE, text.adj = c(-0.2,1.7))
+  
+  fg <- predicted[dresstest$protection == 1,2]
+  bg <- predicted[dresstest$protection == 0,2]
+  # bg <- probs[df$label == 0]
 
-model.forest = randomForest(protection ~., data=dresstrain )
-predicted <- predict(model.forest, dresstest,type = 'prob')
-confusionMatrix(data=predicted.response, reference=dresstest$protection)
-
-
-ROCRpred1 <- prediction(predicted[,1], dresstest$protection)
-ROCRperf1 <- performance(ROCRpred1, 'tpr','fpr')
-ROCRpred2 <- prediction(predicted[,2], dresstest$protection)
-ROCRperf2 <- performance(ROCRpred2, 'tpr','fpr')
-plot(ROCRperf1, colorize = TRUE, text.adj = c(-0.2,1.7))
-plot(ROCRperf1, colorize = TRUE, text.adj = c(-0.2,1.7),add=TRUE)
+  # ROC Curve
+  roc <- roc.curve(scores.class0 = fg, scores.class1 = bg, curve = T)
+  plot(roc)
+  
+  pr <- pr.curve(scores.class0 = fg, scores.class1 = bg, curve = T)
+  plot(pr)
+}else{
+  model <- glm (protection~., data=dresstrain, family = binomial)
+  summary(model)
+  
+}
