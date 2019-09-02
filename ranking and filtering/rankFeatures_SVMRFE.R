@@ -1,29 +1,33 @@
 library(e1071)
+library(here)
 
-source("svmRFE.R")
-source("featurefiltering.R")
+here()
+source("ranking and filtering/svmRFE.R")
+source("ranking and filtering/featurefiltering.R")
 
 timestamp();
 
 set.seed(10);
 
-fScheme = "_comb";
+fScheme = "_PSF";
 
-RDSFolder = "RDSFiles/"
+RDSFolder = "out/"
 
 fileNameSuffix = paste(fScheme, ".rds", sep = "");
 
 InitialRankedFeaturesFile = paste(RDSFolder, "ff_SvmRFE" , fileNameSuffix, sep = "");
 FinalRankedFeaturesFile   = paste(RDSFolder, "ff_SvmRFE2", fileNameSuffix, sep = "");
-featureFile               = paste(RDSFolder, "featurized", fileNameSuffix, sep = "");
+# featureFile               = paste(RDSFolder, "featurized", fileNameSuffix, sep = "");
+featureFile = paste(RDSFolder,"comb_raw.rds",sep="")
 
-if (!file.exists(FinalRankedFeaturesFile)) {
+if (!file.exists(FinalRankedFeaturesFile ) || TRUE) {
   cat(as.character(Sys.time()),">> Loading feature file ...\n");
   features = readRDS(featureFile);
   cat(as.character(Sys.time()),">> Done ( from cached file:", featureFile, ")\n");
  
   features$ID = NULL;
   features$Type = NULL;
+  features$Name = NULL;
   cat(as.character(Sys.time()),">> Total features: ", length(features[1,]) - 1, "\n");
 
   cat(as.character(Sys.time()),">> Loading initial feature ranking ...\n");
@@ -37,13 +41,13 @@ if (!file.exists(FinalRankedFeaturesFile)) {
   #
   # Balance the dataset (576+576) by undersampling the negative (larger) set
   #
-  positiveSet = features[sample(1:576),]
-  negativeSetInd = sample(577:length(features[,1]))[1:576]
-  negativeSetInd = negativeSetInd[order(negativeSetInd)]
-  features = rbind(features[1:576,], features[negativeSetInd,])
-  
+  # positiveSet = features[sample(1:576),]
+  # negativeSetInd = sample(577:length(features[,1]))[1:576]
+  # negativeSetInd = negativeSetInd[order(negativeSetInd)]
+  # features = rbind(features[1:576,], features[negativeSetInd,])
+  # 
   # random shuffle of features
-  features <- features[sample(nrow(features)),]
+  # features <- features[sample(nrow(features)),] 
   
   cat(as.character(Sys.time()),">> Computing feature ranking ...\n");
   

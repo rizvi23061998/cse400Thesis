@@ -2,8 +2,14 @@ require("e1071");
 require("randomForest");
 require("ROCR");
 require("pracma");
+library(DMwR)
+library(dplyr)
+library(caret)
+library(caTools)
+library(here)
 
-source("learn.R");
+
+source("raw/learn.R");
 
 learnWithCV <-
   function(formula, data, cross, learner, ...) {
@@ -15,10 +21,14 @@ learnWithCV <-
       trainFolds = data
       testFold = data[(folds[i]:(folds[i+1]-1)),]
       trainFolds = data[-(folds[i]:(folds[i+1]-1)),]
-
+      
+      print(paste("model ",i,"is starting training..."));
       model = learn(formula, trainFolds, learner, ...);
+      print(paste("model ",i,"finished training..."));
       mlPred = predict(model, testFold)
+      print(confusionMatrix(data=mlPred, reference=testFold$protection))
       predVector = c(predVector, as.numeric(mlPred))
+      print(predVector)
       i = i + 1
     }
     
@@ -31,7 +41,21 @@ learnWithCV <-
     
     # perform classification based perf. measures
     if (is.factor(data[,dependentVar])) {
+      print("classification based predictions");
       mlPrediction = prediction(as.numeric(predVector), as.numeric(data[,dependentVar]))
+      
+      print(mlPrediction)
+      
+      # Find the ROC curve and AUCROC
+      AUCROC  = ROCR::performance(mlPrediction,"auc")@y.values[[1]];
+      rocCurve = ROCR::performance(mlPrediction,"tpr", "fpr");
+      
+      # Find the PR curve and AUCPR
+      prCurve  = ROCR::performance(mlPrediction,"prec", "rec");
+      x = unlist(prCurve@x.values);
+      y = unlist(prCurve@y.values);
+      df = data.frame(x = x[2:length(x)], y = y[2:length(y)]);
+      AUCPR  = trapz(df$x, df$y)
       
       acc = unlist(ROCR::performance(mlPrediction,"acc")@y.values)[2]
       sensitivity = unlist(ROCR::performance(mlPrediction,"sens")@y.values)[2];
@@ -42,6 +66,10 @@ learnWithCV <-
       
       return(list(
         "model"= model,
+        "rocCurve"= rocCurve,
+        "prCurve"= prCurve,
+        "AUCROC"= AUCROC,
+        "AUCPR" = AUCPR,
         "acc"  = acc,
         "sens" = sensitivity,
         "spec" = specificity,

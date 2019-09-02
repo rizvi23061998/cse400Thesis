@@ -38,6 +38,7 @@ if (!file.exists(rankedFeaturesFile)) {
   cat(as.character(Sys.time()),">> Computing feature ranking ...\n");
   allRank = rfmodel$importance[order(-rfmodel$importance[,3]),];
   rankedFeatures = rownames(allRank[which(allRank[,3]>=0),]);
+  # rankedFeatures = rownames(allRank);
   saveRDS(rankedFeatures, rankedFeaturesFile);
   cat(as.character(Sys.time()),">> Done\n");
   
