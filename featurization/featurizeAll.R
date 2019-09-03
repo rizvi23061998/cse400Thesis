@@ -2,7 +2,7 @@ library(e1071)
 library(ROCR)
 library(randomForest)
 library(readxl)
-
+library(here)
 source(here('featurization','./featurization.R'));
 
 timestamp();
@@ -18,7 +18,7 @@ seq = read_excel(seqFile);
 dataset = merge(info,seq,by="Name");
 dataset = subset(dataset,select=c("Name","Clinical Status","VH","VL"));
 names(dataset)[names(dataset) == "Clinical Status"]<-"protection";
-dataset$Sequence = paste(dataset$VH,dataset$VL,sep="");
+dataset$Sequence =paste(dataset$VH,dataset$VL,sep="");
 dataset$protection[dataset$protection == "Approved"]<- "1";
 dataset$protection[dataset$protection != "1"]<- "0";
 
@@ -34,8 +34,8 @@ for (i in (1:3)){
   
   outFolder = "out/"
   featureFile = paste(outFolder,"featurized",fScheme[i],".rds",sep = "")
-  ngramVal = c(3,0,0);
-  ngdipVal = c(0,10,0);
+  ngramVal = c(4,0,0);
+  ngdipVal = c(0,15,0);
   psfVal = c(0,0,25);
   # featureFile = paste(featureFilePrefix, fScheme, ".rds", sep = "");
   

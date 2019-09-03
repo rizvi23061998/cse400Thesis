@@ -11,7 +11,11 @@ library(PRROC)
 source('raw/learnWithCV.R')
 
 rerun = 1;
-seed = 80;
+seed = 120; 
+#seed=120,(4,15,25),seed_rankFeatures=20,accuracy=.7714(random forest,unbalanced),concat(VH,VL)
+#seed=120,Accuracy : 0.8(nb,unbalanced),.6286(balanced)
+#seed=120,Accuracy : 0.6857 (svm,unblanced)         
+
 
 classifier = "svm"
 type = "unbalanced"
@@ -60,6 +64,8 @@ print("splitted")
 dresstrain <- rbind(train1,train2)
 dresstest <- rbind(test1,test2)
 
+split <- sample.split(dresstrain$protection, SplitRatio = 0.75)
+validation_data <-subset(dresstrain,split==FALSE)
 print("test train completed")
 
 # dresstrain <- subset(comb_data, split == TRUE)
@@ -85,7 +91,7 @@ if(classifier == "rf"){
   # print(as.numeric(predicted))
   print(confusionMatrix(data=predicted, reference=dresstest$protection,positive = "1"))
   print(confusionMatrix(data=predicted, reference=dresstest$protection,mode="prec_recall",positive = "1"))
-  cat("MCC:",mcc(predicted,dresstest$protection))
+  # cat("MCC:",mcc(predicted,dresstest$protection))
   predicted <- predict(model.forest, dresstest,type = 'prob')
 
   ROCRpred2 <- prediction(predicted[,2], dresstest$protection)
@@ -95,16 +101,21 @@ if(classifier == "rf"){
   fg <- predicted[dresstest$protection == 1,2]
   bg <- predicted[dresstest$protection == 0,2]
   # bg <- probs[df$label == 0]
-
+  
   # ROC Curve
   roc <- roc.curve(scores.class0 = fg, scores.class1 = bg, curve = T)
   plot(roc)
 
   pr <- pr.curve(scores.class0 = fg, scores.class1 = bg, curve = T)
   plot(pr)
+  
+  predicted <- predict(model.forest, validation_data)
+  # print(as.numeric(predicted))
+  print(confusionMatrix(data=predicted, reference=validation_data$protection,positive = "1"))
+  
 }else if(classifier == "svm"){
 
-  model <- svm(protection~.,data=dresstrain,type = 'C-classification', kernel = 'linear',cost=10^2,Gamma=100,scale = FALSE)
+  model <- svm(protection~.,data=dresstrain,type = 'C-classification', kernel = 'radial',cost=10^2,Gamma=100,scale = FALSE)
   print(summary(model))
   predict <- predict(model,dresstest)
   print(confusionMatrix(data=(predict),reference = dresstest$protection,positive = "1"))
@@ -127,6 +138,9 @@ if(classifier == "rf"){
 
   pr <- pr.curve(scores.class0 = fg, scores.class1 = bg, curve = T)
   plot(pr)
+  predict <- predict(model,validation_data)
+  print(confusionMatrix(data=(predict),reference = validation_data$protection,positive = "1"))
+  
 
 }else if(classifier == "nb"){
   model <- naiveBayes(protection~.,data=dresstrain);
@@ -142,6 +156,11 @@ if(classifier == "rf"){
   ROCRpred2 <- prediction(predicted[,2], dresstest$protection)
   ROCRperf2 <- performance(ROCRpred2, 'tpr','fpr')
   plot(ROCRperf2, colorize = TRUE, text.adj = c(-0.2,1.7))
+  predicted <- predict(model, validation_data)
+  
+  # print(table(predicted,dresstest$protection))
+  print(confusionMatrix(data=predicted, reference=validation_data$protection))
+  
 
 }else{
   model <- glm (protection~., data=dresstrain, family = binomial,maxit=100)

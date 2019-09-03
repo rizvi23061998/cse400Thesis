@@ -2,7 +2,7 @@ library(randomForest)
 library(here)
 timestamp();
 
-set.seed(10);
+set.seed(20);
 
 fScheme = c("_nGrams","_nGDip","_PSF");
 here();
@@ -37,7 +37,8 @@ if (!file.exists(rankedFeaturesFile)) {
   
   cat(as.character(Sys.time()),">> Computing feature ranking ...\n");
   allRank = rfmodel$importance[order(-rfmodel$importance[,3]),];
-  rankedFeatures = rownames(allRank[which(allRank[,3]>=0),]);
+  print(length(allRank))
+  rankedFeatures = rownames(allRank[which(allRank[,3]>0),]);
   # rankedFeatures = rownames(allRank);
   saveRDS(rankedFeatures, rankedFeaturesFile);
   cat(as.character(Sys.time()),">> Done\n");
