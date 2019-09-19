@@ -10,9 +10,9 @@ for(i in (1:3)){
 
 fileNameSuffix = paste(fScheme[i], ".rds", sep = "");
 
-rfmodelFile        = paste("out/rfmodel"   , fileNameSuffix, sep = "");
-rankedFeaturesFile = paste("out/ff"        , fileNameSuffix, sep = "");
-featureFile        = paste("out/featurized", fileNameSuffix, sep = "");
+rfmodelFile        = paste("out/VL/rfmodel"   , fileNameSuffix, sep = "");
+rankedFeaturesFile = paste("out/VL/ff"        , fileNameSuffix, sep = "");
+featureFile        = paste("out/VL/featurized", fileNameSuffix, sep = "");
 
 
 if (!file.exists(rankedFeaturesFile)) {

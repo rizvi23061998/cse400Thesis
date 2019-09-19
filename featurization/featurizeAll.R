@@ -16,9 +16,9 @@ info = read_excel(infoFile);
 seq = read_excel(seqFile);
 
 dataset = merge(info,seq,by="Name");
-dataset = subset(dataset,select=c("Name","Clinical Status","VH","VL"));
+dataset = subset(dataset,select=c("Name","Clinical Status","VL"));
 names(dataset)[names(dataset) == "Clinical Status"]<-"protection";
-dataset$Sequence =paste(dataset$VH,dataset$VL,sep="");
+dataset$Sequence =paste(dataset$VL);
 dataset$protection[dataset$protection == "Approved"]<- "1";
 dataset$protection[dataset$protection != "1"]<- "0";
 
@@ -32,11 +32,11 @@ for (i in (1:3)){
   print(i);
   fScheme = c("_nGrams","_nGDip","_PSF");
   
-  outFolder = "out/"
+  outFolder = "out/VL/"
   featureFile = paste(outFolder,"featurized",fScheme[i],".rds",sep = "")
   ngramVal = c(4,0,0);
-  ngdipVal = c(0,15,0);
-  psfVal = c(0,0,25);
+  ngdipVal = c(0,25,0);
+  psfVal = c(0,0,3);
   # featureFile = paste(featureFilePrefix, fScheme, ".rds", sep = "");
   
   amins = c("A", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "V", "W", "Y");

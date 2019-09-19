@@ -14,9 +14,10 @@ source('raw/learnWithCV.R')
 
 classifier = "svm"
 type = "unbalanced"
-fpsf = readRDS("out/featurized_PSF.rds");
-ngpsf = readRDS("out/featurized_nGrams.rds");
-fngdip = readRDS("out/featurized_nGDip.rds");
+output="out/VL/"
+fpsf = readRDS(paste(output,"featurized_PSF.rds",sep=""));
+ngpsf = readRDS(paste(output,"featurized_nGrams.rds",sep=""));
+fngdip = readRDS(paste(output,"featurized_nGDip.rds",sep=""));
 ngpsf$protection = NULL;
 fngdip$protection = NULL;
 x <- merge(fpsf,ngpsf,by="Name");
@@ -26,11 +27,11 @@ x$Name = NULL;
 # print(comb_data$protection)
 # print(comb_data$Name)
 
-features_important <- c(readRDS("out/ff_nGrams.rds"),readRDS("out/ff_nGDip.rds"),readRDS("out/ff_PSF.rds"));
+features_important <- c(readRDS(paste(output,"ff_nGrams.rds",sep="")),readRDS(paste(output,"ff_nGDip.rds",sep="")),readRDS(paste(output,"ff_PSF.rds",sep="")));
 features_important <- c(features_important,"Name","protection");
-comb_data <- subset(comb_data, select = c(features_important))
+comb_data <- subset(comb_data, select = c(features_important));
 
-saveRDS(comb_data,"out/comb_raw.rds");
+saveRDS(comb_data,paste(output,"comb_raw.rds",sep=""));
 comb_data$Name = NULL;
 print("Applying smote");
 set.seed(112);
@@ -112,7 +113,7 @@ if(classifier == "rf"){
     , "F1"
     , "MCC"
   );
-  write.csv(accData, "out/acc.csv");
+  write.csv(accData,paste(output,"acc.csv",sep=""));
   
   if (is.null(bestPerf) || bestPerf$mcc < perf$mcc) {
     bestPerf = perf;
@@ -124,8 +125,8 @@ if(classifier == "rf"){
   
   cat("\n");
   
-  saveRDS(rocCurvePoints, "out/rocData.rds");
-  saveRDS(prCurvePoints , "out/prData.rds");
+  saveRDS(rocCurvePoints,paste(output,"rocData.rds",sep=""));
+  saveRDS(prCurvePoints , paste(output,"prData.rds",sep=""));
   
   cat("Best Result for nF = ", bestParams$maxFeatureCount, "\n");
   cat("AUCROC      : ", bestPerf$auc, "\n");
@@ -222,7 +223,7 @@ if(classifier == "rf"){
     , "F1"
     , "MCC"
   );
-  write.csv(accData, "out/acc.csv");
+  write.csv(accData,paste(output,"acc.csv",sep=""));
   
   if (is.null(bestPerf) || bestPerf$mcc < perf$mcc) {
     bestPerf = perf;
@@ -234,8 +235,8 @@ if(classifier == "rf"){
   
   cat("\n");
   
-  saveRDS(rocCurvePoints, "out/rocData.rds");
-  saveRDS(prCurvePoints , "out/prData.rds");
+  saveRDS(rocCurvePoints,paste(output,"rocData.rds",sep=""));
+  saveRDS(prCurvePoints ,paste(output,"prData.rds",sep=""));
   
   cat("Best Result for nF = ", bestParams$maxFeatureCount, "\n");
   cat("AUCROC      : ", bestPerf$auc, "\n");
