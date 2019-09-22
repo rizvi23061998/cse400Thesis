@@ -152,8 +152,9 @@ if(classifier == "rf"){
   cat("Accuracy    : ", bestPerf$acc, "\n");
   cat("Sensitivity : ", bestPerf$sens, "\n");
   cat("Specificity : ", bestPerf$spec, "\n");
-  cat("MCC         : ", bestPerf$mcc, "\n")
-  
+  cat("MCC         : ", bestPerf$mcc, "\n");
+  cat("Precision   : ", bestPerf$prec,"\n");
+  cat("F1          : ", bestPerf$f1,"\n")
   # if(!file.exists("out/rf_model_comb.rds")){
   #   model.forest = randomForest(protection ~., data=dresstrain )
   #   saveRDS(model.forest,"out/rf_model_comb.rds");
@@ -241,7 +242,7 @@ if(classifier == "rf"){
     , "F1"
     , "MCC"
   );
-  write.csv(accData,paste(output,"acc.csv",sep=""));
+  write.csv(accData,paste(output,classifier,"_acc.csv",sep=""));
   
   if (is.null(bestPerf) || bestPerf$mcc < perf$mcc) {
     bestPerf = perf;
@@ -263,6 +264,8 @@ if(classifier == "rf"){
   cat("Sensitivity : ", bestPerf$sens, "\n");
   cat("Specificity : ", bestPerf$spec, "\n");
   cat("MCC         : ", bestPerf$mcc, "\n")
+  cat("Precision   : ", bestPerf$prec,"\n");
+  cat("F1          : ", bestPerf$f1,"\n")
   
   # if(!file.exists("out/rf_model_comb.rds")){
   #   model.forest = randomForest(protection ~., data=dresstrain )
@@ -351,7 +354,7 @@ if(classifier == "rf"){
     , "F1"
     , "MCC"
   );
-  write.csv(accData, "out/acc.csv");
+  write.csv(accData,paste(output,classifier,"_acc.csv",sep=""));
   
   if (is.null(bestPerf) || bestPerf$mcc < perf$mcc) {
     bestPerf = perf;
@@ -373,6 +376,8 @@ if(classifier == "rf"){
   cat("Sensitivity : ", bestPerf$sens, "\n");
   cat("Specificity : ", bestPerf$spec, "\n");
   cat("MCC         : ", bestPerf$mcc, "\n")
+  cat("Precision   : ", bestPerf$prec,"\n");
+  cat("F1          : ", bestPerf$f1,"\n")
   
   
 }
