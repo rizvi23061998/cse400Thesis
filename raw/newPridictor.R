@@ -9,13 +9,14 @@ library(PRROC)
 library(here)
 library("SuperLearner")
 
-
+#SuperLearner requires a Y variable, which is the response or outcome you want,
+#an X variable, which are the predictor variables
 
 source('raw/learnWithCV.R')
 
 classifier = "rf"
 type = "unbalanced"
-output="out/VH/"
+output="out/VL/"
 fpsf = readRDS(paste(output,"featurized_PSF.rds",sep=""));
 ngpsf = readRDS(paste(output,"featurized_nGrams.rds",sep=""));
 fngdip = readRDS(paste(output,"featurized_nGDip.rds",sep=""));
@@ -34,7 +35,7 @@ comb_data <- subset(comb_data, select = c(features_important));
 
 saveRDS(comb_data,paste(output,"comb_raw.rds",sep=""));
 comb_data$Name = NULL;
-print("Applying smote");
+#print("Applying smote");
 set.seed(112);
 # comb_data <- SMOTE( protection~., comb_data, perc.over = 280, k = 5, perc.under = 150)
 
@@ -54,88 +55,12 @@ if(type == "balanced"){
 
 print(as.data.frame(table(dresstrain$protection)));
 if(classifier == "rf"){
-  nFolds =10;
-  maxFeatureCount = 14000;
-  perf = learnWithCV(protection ~ ., dresstrain, cross = nFolds, "rf");
+  cv.model <- CV.SuperLearner(protection~.,dresstrain,V=10,SL.library=list("SL.randomForest","SL.svm"));
   
-  rocCurvePoints = NULL;
-  bestPerf = NULL;
-  bestParams = NULL;
-  accData = NULL;
+  # Print out the summary statistics
+  summary(cv.model)
   
-  df = data.frame(
-    x = unlist(perf$rocCurve@x.values), 
-    y = unlist(perf$rocCurve@y.values), 
-    Features = as.character(maxFeatureCount)
-  );
-  rocCurvePoints = rbind(rocCurvePoints, df);
   
-  df = data.frame(
-    x = unlist(perf$prCurve@x.values), 
-    y = unlist(perf$prCurve@y.values), 
-    Features = as.character(maxFeatureCount)
-  );
-  prCurvePoints = NULL;
-  prCurvePoints = rbind(prCurvePoints, df);
-  
-  cat(
-    maxFeatureCount,
-    ",", round(perf$AUCROC, 2),
-    ",", round(perf$AUCPR, 2),
-    ",", round(perf$acc, 2),
-    ",", round(perf$sens, 2),
-    ",", round(perf$spec, 2),
-    ",", round(perf$prec, 2),
-    ",", round(perf$f1, 2),
-    ",", round(perf$mcc, 2)
-  );
-  accData = rbind(
-    accData, 
-    c(
-      maxFeatureCount 
-      , perf$AUCROC
-      , perf$AUCPR
-      , perf$acc
-      , perf$sens
-      , perf$spec
-      , perf$prec
-      , perf$f1
-      , perf$mcc
-    )
-  );
-  colnames(accData) = c(
-    "nF"
-    , "AUCROC"
-    , "AUCPR"
-    , "Accuracy"
-    , "Sensitivity"
-    , "Specificity"
-    , "Precision"
-    , "F1"
-    , "MCC"
-  );
-  write.csv(accData,paste(output,"acc.csv",sep=""));
-  
-  if (is.null(bestPerf) || bestPerf$mcc < perf$mcc) {
-    bestPerf = perf;
-    bestParams = list(
-      "maxFeatureCount" = maxFeatureCount
-    )
-    cat(",<-- BEST");
-  }
-  
-  cat("\n");
-  
-  saveRDS(rocCurvePoints,paste(output,"rocData.rds",sep=""));
-  saveRDS(prCurvePoints , paste(output,"prData.rds",sep=""));
-  
-  cat("Best Result for nF = ", bestParams$maxFeatureCount, "\n");
-  cat("AUCROC      : ", bestPerf$auc, "\n");
-  cat("Threshold   : ", bestPerf$threshold, "\n");
-  cat("Accuracy    : ", bestPerf$acc, "\n");
-  cat("Sensitivity : ", bestPerf$sens, "\n");
-  cat("Specificity : ", bestPerf$spec, "\n");
-  cat("MCC         : ", bestPerf$mcc, "\n")
   
   # if(!file.exists("out/rf_model_comb.rds")){
   #   model.forest = randomForest(protection ~., data=dresstrain )
