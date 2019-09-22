@@ -8,6 +8,9 @@ learn <-
     } else if (learner == "rf") {
       model = randomForest(formula, data, ...);
     }
+    else{
+      model = naiveBayes(formula,data, ...);
+    }
     
     return(model);
   }
