@@ -12,9 +12,9 @@ library(here)
 
 source('raw/learnWithCV.R')
 
-classifier = "svm"
-type = "balanced"
-nFolds = 10;
+classifier = "rf"
+type = "unbalanced"
+nFolds = 137;
 output="out/VL/"
 fpsf = readRDS(paste(output,"featurized_PSF.rds",sep=""));
 ngpsf = readRDS(paste(output,"featurized_nGrams.rds",sep=""));
@@ -131,7 +131,7 @@ if(classifier == "rf"){
     , "F1"
     , "MCC"
   );
-  write.csv(accData,paste(output,"acc.csv",sep=""));
+  write.csv(accData,paste(output,classifier,"_acc.csv",sep=""));
   
   if (is.null(bestPerf) || bestPerf$mcc < perf$mcc) {
     bestPerf = perf;

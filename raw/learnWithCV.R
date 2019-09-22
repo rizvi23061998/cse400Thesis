@@ -18,7 +18,7 @@ learnWithCV <-
     # folds = seq(from=1,to=N, by=round(N/cross))
     # folds[cross+1] = N+1
     # data = data[folds[2]:N,]
-    
+    print(paste("Starting training with ",learner));
     N = length(data[, 1])
     folds = seq(from=1,to=N, by=round(N/cross))
     folds[cross+1] = N+1
@@ -32,9 +32,14 @@ learnWithCV <-
       if(bType == "balanced"){
         trainFolds <- SMOTE( protection~., trainFolds, perc.over = 280, k = 5, perc.under = 150);
       }
-      print(paste("model ",i,"is starting training..."));
+      if(mod(i,20) == 0){
+        print(paste("model ",i,"is starting training..."));      
+      }
+      
       model = learn(formula, trainFolds, learner, ...);
-      print(paste("model ",i,"finished training..."));
+      if(mod(i,20) == 0){
+        print(paste("model ",i,"is finished training."));      
+      }
       mlPred = predict(model, testFold)
       # print(confusionMatrix(data=mlPred, reference=testFold$protection))
       
