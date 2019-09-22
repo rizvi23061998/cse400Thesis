@@ -13,7 +13,8 @@ library(here)
 source('raw/learnWithCV.R')
 
 classifier = "svm"
-type = "unbalanced"
+type = "balanced"
+nFolds = 10;
 output="out/VL/"
 fpsf = readRDS(paste(output,"featurized_PSF.rds",sep=""));
 ngpsf = readRDS(paste(output,"featurized_nGrams.rds",sep=""));
@@ -37,25 +38,42 @@ print("Applying smote");
 set.seed(112);
 # comb_data <- SMOTE( protection~., comb_data, perc.over = 280, k = 5, perc.under = 150)
 
+comb_data_1 <- comb_data[which(comb_data$protection == 1),]
+comb_data_0 <- comb_data[which(comb_data$protection == 0),]
+#creating balanced(not smote) train test split
+split <- sample.split(comb_data_1$protection, SplitRatio = .8)
 
-split <- sample.split(comb_data$protection, SplitRatio = 0.75)
+train1 <- subset(comb_data_1, split == TRUE)
+test1 <- subset(comb_data_1, split == FALSE)
 
-dresstrain <- subset(comb_data, split == TRUE)
-dresstest <- subset(comb_data, split == FALSE)
+split <- sample.split(comb_data_0$protection, SplitRatio = .8)
+
+train2 <- subset(comb_data_0, split == TRUE)
+test2 <- subset(comb_data_0, split == FALSE)
+
+print("splitted")
+dresstrain <- rbind(train1,train2)
+dresstest <- rbind(test1,test2)
+
+split <- sample.split(dresstrain$protection, SplitRatio = .8)
+validation_data <-subset(dresstrain,split==FALSE)
+print("test train completed")
+
+# dresstrain <- subset(comb_data, split == TRUE)
+# dresstest <- subset(comb_data, split == FALSE)
 
 if(type == "balanced"){
   print("Applying smote");
-  dresstrain <- SMOTE( protection~., dresstrain, perc.over = 280, k = 5, perc.under = 150);
+  # dresstrain <- SMOTE( protection~., dresstrain, perc.over = 280, k = 5, perc.under = 150);
 }else{
   print("Not balancing")
 }
 
-
 print(as.data.frame(table(dresstrain$protection)));
 if(classifier == "rf"){
-  nFolds =10;
+  # nFolds =10;
   maxFeatureCount = 14000;
-  perf = learnWithCV(protection ~ ., dresstrain, cross = nFolds, "rf");
+  perf = learnWithCV(protection ~ ., comb_data, cross = nFolds, "rf",type);
   
   rocCurvePoints = NULL;
   bestPerf = NULL;
@@ -163,9 +181,9 @@ if(classifier == "rf"){
   # pr <- pr.curve(scores.class0 = fg, scores.class1 = bg, curve = T)
   # plot(pr)
 }else if(classifier == "svm"){
-  nFolds =10;
+  # nFolds =10;
   maxFeatureCount = 14000;
-  perf = learnWithCV(protection ~ ., dresstrain, cross = nFolds, "svm");
+  perf = learnWithCV(protection ~ ., comb_data, cross = nFolds, "svm",type);
   
   rocCurvePoints = NULL;
   bestPerf = NULL;
@@ -273,7 +291,90 @@ if(classifier == "rf"){
   # pr <- pr.curve(scores.class0 = fg, scores.class1 = bg, curve = T)
   # plot(pr)
 }else{
-  model <- glm (protection~., data=dresstrain, family = binomial)
-  summary(model)
+  # nFolds =136;
+  maxFeatureCount = 14000;
+  perf = learnWithCV(protection ~ ., comb_data, cross = nFolds, "nb",type);
+  
+  rocCurvePoints = NULL;
+  bestPerf = NULL;
+  bestParams = NULL;
+  accData = NULL;
+  
+  df = data.frame(
+    x = unlist(perf$rocCurve@x.values), 
+    y = unlist(perf$rocCurve@y.values), 
+    Features = as.character(maxFeatureCount)
+  );
+  rocCurvePoints = rbind(rocCurvePoints, df);
+  
+  df = data.frame(
+    x = unlist(perf$prCurve@x.values), 
+    y = unlist(perf$prCurve@y.values), 
+    Features = as.character(maxFeatureCount)
+  );
+  prCurvePoints = NULL;
+  prCurvePoints = rbind(prCurvePoints, df);
+  
+  cat(
+    maxFeatureCount,
+    ",", round(perf$AUCROC, 2),
+    ",", round(perf$AUCPR, 2),
+    ",", round(perf$acc, 2),
+    ",", round(perf$sens, 2),
+    ",", round(perf$spec, 2),
+    ",", round(perf$prec, 2),
+    ",", round(perf$f1, 2),
+    ",", round(perf$mcc, 2)
+  );
+  accData = rbind(
+    accData, 
+    c(
+      maxFeatureCount 
+      , perf$AUCROC
+      , perf$AUCPR
+      , perf$acc
+      , perf$sens
+      , perf$spec
+      , perf$prec
+      , perf$f1
+      , perf$mcc
+    )
+  );
+  colnames(accData) = c(
+    "nF"
+    , "AUCROC"
+    , "AUCPR"
+    , "Accuracy"
+    , "Sensitivity"
+    , "Specificity"
+    , "Precision"
+    , "F1"
+    , "MCC"
+  );
+  write.csv(accData, "out/acc.csv");
+  
+  if (is.null(bestPerf) || bestPerf$mcc < perf$mcc) {
+    bestPerf = perf;
+    bestParams = list(
+      "maxFeatureCount" = maxFeatureCount
+    )
+    cat(",<-- BEST");
+  }
+  
+  cat("\n");
+  
+  saveRDS(rocCurvePoints, "out/rocData.rds");
+  saveRDS(prCurvePoints , "out/prData.rds");
+  
+  cat("Best Result for nF = ", bestParams$maxFeatureCount, "\n");
+  cat("AUCROC      : ", bestPerf$auc, "\n");
+  cat("Threshold   : ", bestPerf$threshold, "\n");
+  cat("Accuracy    : ", bestPerf$acc, "\n");
+  cat("Sensitivity : ", bestPerf$sens, "\n");
+  cat("Specificity : ", bestPerf$spec, "\n");
+  cat("MCC         : ", bestPerf$mcc, "\n")
+  
   
 }
+  
+
