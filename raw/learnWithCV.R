@@ -7,12 +7,18 @@ library(dplyr)
 library(caret)
 library(caTools)
 library(here)
-library("SuperLearner")
+library(mlr)
+library(e1071)
+library(kernlab)
+library(ada)
+# library(bimba)
 
+configureMlr(on.par.without.desc = "quiet")
 source("raw/learn.R");
 
 learnWithCV <-
   function(formula, data, cross, learner,bType, ...) {
+    trainType = "cs";
     # data <- data[sample(nrow(data)),]
     # N = length(data[, 1])
     # folds = seq(from=1,to=N, by=round(N/cross))
@@ -30,25 +36,50 @@ learnWithCV <-
       trainFolds = data[-(folds[i]:(folds[i+1]-1)),]
       
       if(bType == "balanced"){
-        trainFolds <- SMOTE( protection~., trainFolds, perc.over = 280, k = 5, perc.under = 150);
+        trainFolds <- SMOTE( protection~., trainFolds, perc.over = 200, k = 5, perc.under = 180);
+        # trainFolds <- ADASYN(trainFolds,perc_over = 90,k=10);
+        print(as.data.frame(table(trainFolds$protection)));
+        
       }
-      if(mod(i,20) == 0){
-        print(paste("model ",i,"is starting training..."));      
+      if(mod(i,3) == 0){
+        print(paste("model ",i,"is starting training..."))
       }
       
-      model = learn(formula, trainFolds, learner, ...);
-      if(mod(i,20) == 0){
-        print(paste("model ",i,"is finished training."));      
+      if(trainType == "cs"){
+        trainFolds.task = makeClassifTask(data = trainFolds,target = "protection");
+        costs = matrix(c(0, 1, 5, 0), 2);
+        colnames(costs) = rownames(costs) = c("1","0");
+        # print(costs);
+        
+        #lrn = makeLearner("classif.cforest", trace = FALSE,predict.type = "prob")
+        #lrn = makeWeightedClassesWrapper(lrn, wcw.weight = .5 )
+        
+        lrn = makeLearner("classif.randomForest", class.weights = c("0" = 55, "1" = 89),predict.type = "prob")
+        model = train(lrn,trainFolds.task);
+        testFold.task = makeClassifTask(data = testFold,target = "protection");
+        mlPred = predict(model, testFold.task);
+        mlPred.th = setThreshold(mlPred,0.50);
+        print(mlPred.th$data$response)
+        prf = performance(mlPred.th)
+        print(prf)
+        
       }
-      mlPred = predict(model, testFold)
+      else{
+        model = learn(formula, trainFolds, learner, ...);
+      }
+      if(mod(i,3) == 0){
+        print(paste("model ",i,"is finished training."))     
+      }
+      
+      # mlPred = predict(model, testFold);
       # print(confusionMatrix(data=mlPred, reference=testFold$protection))
       
-      newpredvec = c(newpredvec,mlPred)
+      # newpredvec = c(newpredvec,mlPred)
       # print(newpredvec)
       # print("mlprd")
       
       # print(mlPred)
-      predVector = c(predVector, as.numeric(mlPred))
+      predVector = c(predVector, as.numeric(mlPred.th$data$response))
       # print(predVector)
       i = i + 1
     }
@@ -63,10 +94,10 @@ learnWithCV <-
     # perform classification based perf. measures
     if (is.factor(data[,dependentVar])) {
       print("classification based predictions");
-      mlPrediction = prediction(as.numeric(predVector), as.numeric(data[,dependentVar]))
+      mlPrediction = ROCR::prediction(as.numeric(predVector), as.numeric(data[,dependentVar]))
       
       # newmlpred <- prediction(newpredvec,data$protection)
-      
+      # ag$taac
       # Find the ROC curve and AUCROC
       AUCROC  = ROCR::performance(mlPrediction,"auc")@y.values[[1]];
       rocCurve = ROCR::performance(mlPrediction,"tpr", "fpr");

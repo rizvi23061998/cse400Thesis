@@ -14,9 +14,9 @@ infoFile = paste(dataFolder,"pnas_sd01.xlsx",sep="");
 
 info = read_excel(infoFile);
 seq = read_excel(seqFile);
-
+seq_type="VL";
 dataset = merge(info,seq,by="Name");
-dataset = subset(dataset,select=c("Name","Clinical Status","VL"));
+dataset = subset(dataset,select=c("Name","Clinical Status",seq_type));
 names(dataset)[names(dataset) == "Clinical Status"]<-"protection";
 dataset$Sequence =paste(dataset$VL);
 dataset$protection[dataset$protection == "Approved"]<- "1";
@@ -32,7 +32,7 @@ for (i in (1:3)){
   print(i);
   fScheme = c("_nGrams","_nGDip","_PSF");
   
-  outFolder = "out/VL/"
+  outFolder = paste("out/",seq_type,"/",sep="");
   featureFile = paste(outFolder,"featurized",fScheme[i],".rds",sep = "")
   ngramVal = c(4,0,0);
   ngdipVal = c(0,25,0);
@@ -57,7 +57,7 @@ for (i in (1:3)){
     data = dataset;
     nData = length(data[,1]);
     
-    features = featurization(data$Sequence, data$protection, amins, nGramOrder = ngramVal[i], nGDipOrder = ngdipVal[i], psfOrder = psfVal[i]);
+    features = featurization(data$Sequence, data$protection, amins, nGramOrder = ngramVal[i], nGDipOrder = ngdipVal[i], psfOrder = psfVal[i],seq_type);
     features$Name = data$Name
     # features$Type = data$Type;
     saveRDS(features, featureFile);

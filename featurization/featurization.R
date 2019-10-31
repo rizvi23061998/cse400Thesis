@@ -1,7 +1,7 @@
 #' Illustration of Featurization
 #'
 #' This function takes dataset and extracts features.
-#'
+#' 
 #' @param sequences provided as dataframe
 #' @param labels class label of each data. Provided as a column vector
 #' @param alphabet is the list of aminoacids
@@ -9,10 +9,11 @@
 #' @param nGramOrder Highest value of n in n-grams feature extraction technique
 #' @param nGDipOrder Highest value of n in n-Gapped-Dipeptide (nGDip) feature extraction technique
 #' @param psfOrder Highest value of n in n-grams in Position Specific Feature (PSF) feature extraction technique
+#' @param seq_type indicates VH or VL
 #' @return a featurized dataframe
 #' @export
 featurization <-
-  function(sequences, labels, alphabet, nGramOrder, nGDipOrder, psfOrder) {
+  function(sequences, labels, alphabet, nGramOrder, nGDipOrder, psfOrder,seq_type) {
     features = data.frame(1:length(sequences))
     # a dummy column got created. Let us name it. We will
     # delete this column at the end
@@ -44,7 +45,7 @@ featurization <-
             
             # update the nGramOrder feature count
             if (nchar(token) <= nGramOrder) {
-              countToken = paste("C", 0, token, sep = "_")
+              countToken = paste("C", 0, token,seq_type, sep = "_")
               if (!(countToken %in% colnames(features))) {
                 # create the column on demand
                 features[countToken] = integer(nrow(features));
@@ -55,7 +56,7 @@ featurization <-
             
             # update the psfOrder feature count
             if (j <= 10 && nchar(token) <= psfOrder) {
-              posToken = paste("P", j, token, sep = "_");
+              posToken = paste("P", j, token,seq_type, sep = "_");
               if (!(posToken %in% colnames(features))) {
                 # create the column on demand
                 features[posToken] = integer(nrow(features));
@@ -87,7 +88,7 @@ featurization <-
               next;
             }
             token = paste(strSeq[j], strSeq[j+1+k], sep = "");
-            token = paste("G", k, token, sep = "_");
+            token = paste("G", k, token,seq_type,sep = "_");
             if (!(token %in% colnames(features))) {
               # create the column on demand
               features[token] = integer(nrow(features));

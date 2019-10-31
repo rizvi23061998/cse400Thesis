@@ -6,13 +6,15 @@ set.seed(20);
 
 fScheme = c("_nGrams","_nGDip","_PSF");
 here();
+output="out/VL/"
+
 for(i in (1:3)){
 
 fileNameSuffix = paste(fScheme[i], ".rds", sep = "");
 
-rfmodelFile        = paste("out/VL/rfmodel"   , fileNameSuffix, sep = "");
-rankedFeaturesFile = paste("out/VL/ff"        , fileNameSuffix, sep = "");
-featureFile        = paste("out/VL/featurized", fileNameSuffix, sep = "");
+rfmodelFile        = paste(output,"rfmodel"   , fileNameSuffix, sep = "");
+rankedFeaturesFile = paste(output,"ff"        , fileNameSuffix, sep = "");
+featureFile        = paste(output,"featurized", fileNameSuffix, sep = "");
 
 
 if (!file.exists(rankedFeaturesFile)) {

@@ -8,7 +8,6 @@ library(caTools)
 library(PRROC)
 
 
-source('raw/learnWithCV.R')
 
 rerun = 1;
 seed = 120; 
@@ -16,29 +15,50 @@ seed = 120;
 #seed=120,Accuracy : 0.8(nb,unbalanced),.6286(balanced)
 #seed=120,Accuracy : 0.6857 (svm,unblanced)         
 
+output="out/VH/"
+output1="out/VL/"
+output_comb="out/comb/"
 
 classifier = "rf"
 type = "unbalanced"
-fpsf = readRDS("out/VL/featurized_PSF.rds");
-ngpsf = readRDS("out/VL/featurized_nGrams.rds");
-fngdip = readRDS("out/VL/featurized_nGDip.rds");
+fpsf = readRDS(paste(output,"featurized_PSF.rds",sep=""));
+ngpsf = readRDS(paste(output,"featurized_nGrams.rds",sep=""));
+fngdip = readRDS(paste(output,"featurized_nGDip.rds",sep=""));
+fpsf1 = readRDS(paste(output1,"featurized_PSF.rds",sep=""));
+ngpsf1 = readRDS(paste(output1,"featurized_nGrams.rds",sep=""));
+fngdip1 = readRDS(paste(output1,"featurized_nGDip.rds",sep=""));
+
 ngpsf$protection = NULL;
 fngdip$protection = NULL;
+fpsf1$protection = NULL;
+ngpsf1$protection = NULL;
+fngdip1$protection = NULL;
+
 x <- merge(fpsf,ngpsf,by="Name");
-comb_data <- merge(x,fngdip,by="Name"); 
+x1<- merge(x,fngdip,by="Name");
+x2<- merge(x1,fpsf1,by="Name");
+x3<- merge(x2,ngpsf1,by="Name");
+comb_data<- merge(x3,fngdip1,by="Name")
+#comb_data <- merge(x,fngdip,by="Name"); 
 x$Name = NULL;
 
 # print(comb_data$protection)
 # print(comb_data$Name)
+ngram_VH= readRDS(paste(output,"ff_nGrams.rds",sep=""));
+ngdip_VH= readRDS(paste(output,"ff_nGDip.rds",sep=""));
+psf_VH= readRDS(paste(output,"ff_PSF.rds",sep=""));
+ngram_VL= readRDS(paste(output1,"ff_nGrams.rds",sep=""));
+ngdip_VL= readRDS(paste(output1,"ff_nGDip.rds",sep=""));
+psf_VL= readRDS(paste(output1,"ff_PSF.rds",sep=""));
 
-features_important <- c(readRDS("out/VL/ff_nGrams.rds"),readRDS("out/VL/ff_nGDip.rds"),readRDS("out/VL/ff_PSF.rds"));
+features_important <- c(ngram_VH,ngdip_VH,psf_VH,ngram_VL,ngdip_VL,psf_VL);
 # features_important <- c(readRDS("out/ff_SvmRFE_nGrams.rds"),readRDS("out/ff_SvmRFE_nGDip.rds"),readRDS("out/ff_SvmRFE_PSF.rds"));
 # features_important <- c(features_important,"Name","protection");
 features_important <- c(features_important,"Name","protection");
 # features_important <- c(readRDS("out/ff_SvmRFE2_PSF.rds"),"Name","protection");
 comb_data <- subset(comb_data, select = c(features_important))
 
-saveRDS(comb_data,"out/VL/comb_raw.rds");
+saveRDS(comb_data,paste(output_comb,"comb_raw.rds",sep=""));
 # fngdip$protection <- comb_data$protection;
 # comb_data <- fpsf;
 comb_data$Name = NULL;
@@ -83,7 +103,7 @@ if(classifier == "rf"){
   print("rf model is training")
   # if(!file.exists("out/rf_model_comb.rds")){
     model.forest = randomForest(protection ~., data=dresstrain )
-    saveRDS(model.forest,"out/VL/rf_model_comb.rds");
+    saveRDS(model.forest,paste(output_comb,"rf_model_comb.rds",sep=""));
   
     # model.forest = readRDS("out/rf_model_comb.rds");
   

@@ -7,20 +7,15 @@ library(caret)
 library(caTools)
 library(PRROC)
 library(here)
-library("SuperLearner")
 
 
 
 source('raw/learnWithCV.R')
 
-classifier = "rf"
+classifier = "svm"
 type = "unbalanced"
-<<<<<<< HEAD
-output="out/VH/"
-=======
 nFolds = 137;
 output="out/VL/"
->>>>>>> 0a3b9a912a24ad7ee9719c615fe750996e059b31
 fpsf = readRDS(paste(output,"featurized_PSF.rds",sep=""));
 ngpsf = readRDS(paste(output,"featurized_nGrams.rds",sep=""));
 fngdip = readRDS(paste(output,"featurized_nGDip.rds",sep=""));
@@ -39,7 +34,7 @@ comb_data <- subset(comb_data, select = c(features_important));
 
 saveRDS(comb_data,paste(output,"comb_raw.rds",sep=""));
 comb_data$Name = NULL;
-print("Applying smote");
+
 set.seed(112);
 # comb_data <- SMOTE( protection~., comb_data, perc.over = 280, k = 5, perc.under = 150)
 
@@ -56,25 +51,15 @@ split <- sample.split(comb_data_0$protection, SplitRatio = .8)
 train2 <- subset(comb_data_0, split == TRUE)
 test2 <- subset(comb_data_0, split == FALSE)
 
-print("splitted")
+
 dresstrain <- rbind(train1,train2)
 dresstest <- rbind(test1,test2)
 
 split <- sample.split(dresstrain$protection, SplitRatio = .8)
 validation_data <-subset(dresstrain,split==FALSE)
-print("test train completed")
 
-# dresstrain <- subset(comb_data, split == TRUE)
-# dresstest <- subset(comb_data, split == FALSE)
 
-if(type == "balanced"){
-  print("Applying smote");
-  # dresstrain <- SMOTE( protection~., dresstrain, perc.over = 280, k = 5, perc.under = 150);
-}else{
-  print("Not balancing")
-}
-
-print(as.data.frame(table(dresstrain$protection)));
+print(as.data.frame(table(comb_data$protection)));
 if(classifier == "rf"){
   # nFolds =10;
   maxFeatureCount = 14000;
@@ -187,7 +172,7 @@ if(classifier == "rf"){
   # pr <- pr.curve(scores.class0 = fg, scores.class1 = bg, curve = T)
   # plot(pr)
 }else if(classifier == "svm"){
-  # nFolds =10;
+  
   maxFeatureCount = 14000;
   perf = learnWithCV(protection ~ ., comb_data, cross = nFolds, "svm",type);
   
